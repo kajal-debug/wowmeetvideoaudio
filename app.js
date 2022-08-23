@@ -3,13 +3,13 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-app.use(express.static('./public_html/game/'));
-app.use(express.static('./public_html/libs'));
-app.use(express.static('./public_html/game/v3'));
+app.use(express.static('../../public_html/game/'));
+app.use(express.static('../../public_html/libs'));
+app.use(express.static('../../public_html/game/v3'));
 app.get('/',function(req, res) {
-    res.sendFile(__dirname + './public_html/game/v3/index.html');
+    res.sendFile(__dirname + '../../public_html/game/v3/index.html');
 });
-const port = process.env.PORT||8001
+ const port = process.env.PORT||5501
 io.sockets.on('connection', function(socket){
 	socket.userData = { x:0, y:0, z:0, heading:0 }; //Default values;
  
@@ -48,6 +48,8 @@ io.sockets.on('connection', function(socket){
 		io.to(data.id).emit('chat message', { id: socket.id, message: data.message });
 	});
 
+	// rtc
+
 	// convenience function to log server messages on the client
 	function log() {
 		var array = ['Message from server:'];
@@ -79,7 +81,7 @@ io.sockets.on('connection', function(socket){
 			socket.join(room);
 			socket.emit('joined', room, socket.id);
 			io.sockets.in(room).emit('ready');
-		} else { // max two clients
+		} else { // no limit for max no. of users
 			socket.emit('full', room);
 		}
 	});
@@ -90,7 +92,6 @@ io.sockets.on('connection', function(socket){
 			ifaces[dev].forEach(function(details) {
 				if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
 					socket.emit('ipaddr', details.address);
-					console.log("abaas" + details.address);
 				}
 			});
 		}
@@ -102,7 +103,7 @@ io.sockets.on('connection', function(socket){
 });
 
 http.listen(port, function(){
-  console.log('listening on *:8001');
+  console.log('listening on *:5501');
 });
 
 setInterval(function(){

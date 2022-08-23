@@ -1,17 +1,17 @@
-class Game{
-	constructor(){
-		if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+class Game {
+	constructor() {
+		if (!Detector.webgl) Detector.addGetWebGLMessage();
 
 		this.modes = Object.freeze({
-			NONE:   Symbol("none"),
+			NONE: Symbol("none"),
 			PRELOAD: Symbol("preload"),
-			INITIALISING:  Symbol("initialising"),
+			INITIALISING: Symbol("initialising"),
 			CREATING_LEVEL: Symbol("creating_level"),
 			ACTIVE: Symbol("active"),
 			GAMEOVER: Symbol("gameover")
 		});
 		this.mode = this.modes.NONE;
-		
+
 		this.container;
 		this.player;
 		this.cameras;
@@ -20,42 +20,42 @@ class Game{
 		this.renderer;
 		this.animations = {};
 		this.assetsPath = 'assets/';
-		
+
 		this.remotePlayers = [];
 		this.remoteColliders = [];
 		this.initialisingPlayers = [];
 		this.remoteData = [];
 
 		// this.stats;
-		
+
 		// const statsManager = new StatsManager();
 
 		// var stats = new Stats();
 		// stats.showPanel( 1 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 		// document.body.appendChild( stats.dom );
-		
-		this.messages = { 
-			text:[ 
-			"Welcome to WoWMeet",
-			"WoWExp Virtual Meet"
+
+		this.messages = {
+			text: [
+				"Welcome to WoWMeet",
+				"WoWExp Virtual Meet"
 			],
-			index:0
+			index: 0
 		}
 
 		// const stats = Stats();
 		// document.body.appendChild(this.stats);
-		
-		this.container = document.createElement( 'div' );
+
+		this.container = document.createElement('div');
 		this.container.style.height = '100%';
-		document.body.appendChild( this.container );
-		
+		document.body.appendChild(this.container);
+
 		const sfxExt = SFX.supportsAudioType('mp3') ? 'mp3' : 'ogg';
-        
+
 		const game = this;
 		this.anims = ['Walking', 'Walking Backwards', 'Turn', 'Running', 'Pointing', 'Talking', 'Pointing Gesture'];
-		
+
 		const options = {
-			assets:[
+			assets: [
 				`${this.assetsPath}images/nx.jpg`,
 				`${this.assetsPath}images/px.jpg`,
 				`${this.assetsPath}images/ny.jpg`,
@@ -63,182 +63,182 @@ class Game{
 				`${this.assetsPath}images/nz.jpg`,
 				`${this.assetsPath}images/pz.jpg`
 			],
-			oncomplete: function(){
+			oncomplete: function () {
 				game.init();
 			}
 		}
-		
-		this.anims.forEach( function(anim){ options.assets.push(`${game.assetsPath}fbx/anims/${anim}.fbx`)});
+
+		this.anims.forEach(function (anim) { options.assets.push(`${game.assetsPath}fbx/anims/${anim}.fbx`) });
 		options.assets.push(`${game.assetsPath}fbx/vr_meet_model.fbx`);
-		
+
 		this.mode = this.modes.PRELOAD;
-		
+
 		this.clock = new THREE.Clock();
 
 		const preloader = new Preloader(options);
-		
-		window.onError = function(error){
+
+		window.onError = function (error) {
 			console.error(JSON.stringify(error));
 		}
 	}
-	
-	initSfx(){
+
+	initSfx() {
 		this.sfx = {};
 		this.sfx.context = new (window.AudioContext || window.webkitAudioContext)();
 		this.sfx.gliss = new SFX({
 			context: this.sfx.context,
-			src:{mp3:`${this.assetsPath}sfx/gliss.mp3`, ogg:`${this.assetsPath}sfx/gliss.ogg`},
+			src: { mp3: `${this.assetsPath}sfx/gliss.mp3`, ogg: `${this.assetsPath}sfx/gliss.ogg` },
 			loop: false,
 			volume: 0.3
 		});
 	}
-	
-	set activeCamera(object){
+
+	set activeCamera(object) {
 		this.cameras.active = object;
 	}
-	
+
 	init() {
 		this.mode = this.modes.INITIALISING;
 
-		this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 10, 200000 );
-		
+		this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 10, 200000);
+
 		this.scene = new THREE.Scene();
-		this.scene.background = new THREE.Color( 0x00a0f0 );
+		this.scene.background = new THREE.Color(0x00a0f0);
 
-		const ambient = new THREE.AmbientLight( 0xaaaaaa );
-        this.scene.add( ambient );
+		const ambient = new THREE.AmbientLight(0xaaaaaa);
+		this.scene.add(ambient);
 
-        const light = new THREE.DirectionalLight( 0xaaaaaa );
-        light.position.set( 30, 100, 40 );
-        light.target.position.set( 0, 0, 0 );
+		const light = new THREE.DirectionalLight(0xaaaaaa);
+		light.position.set(30, 100, 40);
+		light.target.position.set(0, 0, 0);
 
-        light.castShadow = true;
+		light.castShadow = true;
 
 		const lightSize = 500;
-        light.shadow.camera.near = 0.01;
-        light.shadow.camera.far = 500;
+		light.shadow.camera.near = 0.01;
+		light.shadow.camera.far = 500;
 		light.shadow.camera.left = light.shadow.camera.bottom = -lightSize;
 		light.shadow.camera.right = light.shadow.camera.top = lightSize;
 
-        light.shadow.bias = 0.0039;
-        light.shadow.mapSize.width = 1024;
-        light.shadow.mapSize.height = 1024;
-		
+		light.shadow.bias = 0.0039;
+		light.shadow.mapSize.width = 1024;
+		light.shadow.mapSize.height = 1024;
+
 		this.sun = light;
 		this.scene.add(light);
 
 		// model
 		const loader = new THREE.FBXLoader();
 		const game = this;
-		
+
 		this.player = new PlayerLocal(this);
-		
+
 		this.loadEnvironment(loader);
-		
+
 		this.speechBubble = new SpeechBubble(this, "", 150);
 		this.speechBubble.mesh.position.set(0, 350, 0);
-		
+
 		this.joystick = new JoyStick({
 			onMove: this.playerControl,
 			game: this
 		});
-		
-		this.renderer = new THREE.WebGLRenderer( { antialias: true } );
-		this.renderer.setPixelRatio( window.devicePixelRatio );
-		this.renderer.setSize( window.innerWidth, window.innerHeight );
+
+		this.renderer = new THREE.WebGLRenderer({ antialias: true });
+		this.renderer.setPixelRatio(window.devicePixelRatio);
+		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		this.renderer.shadowMap.enabled = true;
-		this.container.appendChild( this.renderer.domElement );
-		
-		if ('ontouchstart' in window){
-			window.addEventListener( 'touchdown', (event) => game.onMouseDown(event), false );
-		}else{
-			window.addEventListener( 'mousedown', (event) => game.onMouseDown(event), false );	
+		this.container.appendChild(this.renderer.domElement);
+
+		if ('ontouchstart' in window) {
+			window.addEventListener('touchdown', (event) => game.onMouseDown(event), false);
+		} else {
+			window.addEventListener('mousedown', (event) => game.onMouseDown(event), false);
 		}
-		
-		window.addEventListener( 'resize', () => game.onWindowResize(), false );
+
+		window.addEventListener('resize', () => game.onWindowResize(), false);
 	}
-	
-	loadEnvironment(loader){
+
+	loadEnvironment(loader) {
 		const game = this;
-		loader.load(`${this.assetsPath}fbx/vr_meet_model.fbx`, function(object){
+		loader.load(`${this.assetsPath}fbx/vr_meet_model.fbx`, function (object) {
 			game.environment = object;
 			game.colliders = [];
-			console.log("1. colliders = "+game.colliders);
+			console.log("1. colliders = " + game.colliders);
 			object.scale.set(1.5, 1.5, 1.5);
 			object.position.set(0, 460, 0);
 			game.scene.add(object);
-			object.traverse( function ( child ) {
+			object.traverse(function (child) {
 				// console.log(child.isMesh);
-				if ( child.isMesh ) {
-					if (child.name.startsWith("proxy")){
+				if (child.isMesh) {
+					if (child.name.startsWith("proxy")) {
 						game.colliders.push(child);
-						console.log("2. colliders = "+game.colliders);
+						console.log("2. colliders = " + game.colliders);
 						child.material.visible = true;
-					}else{
+					} else {
 						child.castShadow = true;
 						child.receiveShadow = true;
 					}
 				}
-			} );
-			
-			const tloader = new THREE.CubeTextureLoader();
-			tloader.setPath( `${game.assetsPath}/images/` );
+			});
 
-			var textureCube = tloader.load( [
+			const tloader = new THREE.CubeTextureLoader();
+			tloader.setPath(`${game.assetsPath}/images/`);
+
+			var textureCube = tloader.load([
 				'px.jpg', 'nx.jpg',
 				'py.jpg', 'ny.jpg',
 				'pz.jpg', 'nz.jpg'
-			] );
+			]);
 
 			game.scene.background = textureCube;
-			
+
 			game.loadNextAnim(loader);
 		})
 	}
 
-	loadNextAnim(loader){
+	loadNextAnim(loader) {
 		let anim = this.anims.pop();
 		const game = this;
-		loader.load( `${this.assetsPath}fbx/anims/${anim}.fbx`, function( object ){
+		loader.load(`${this.assetsPath}fbx/anims/${anim}.fbx`, function (object) {
 			game.player.animations[anim] = object.animations[0];
-			if (game.anims.length>0){
+			if (game.anims.length > 0) {
 				game.loadNextAnim(loader);
-			}else{
+			} else {
 				delete game.anims;
 				game.action = "Idle";
 				game.mode = game.modes.ACTIVE;
 				game.animate();
 				// statsManager.update();
 			}
-		});	
+		});
 	}
-	
-	playerControl(forward, turn){
+
+	playerControl(forward, turn) {
 		turn = -turn;
-		
-		if (forward>0.3){
-			if (this.player.action!='Walking' && this.player.action!='Running') this.player.action = 'Walking';
-		}else if (forward<-0.3){
-			if (this.player.action!='Walking Backwards') this.player.action = 'Walking Backwards';
-		}else{
+
+		if (forward > 0.3) {
+			if (this.player.action != 'Walking' && this.player.action != 'Running') this.player.action = 'Walking';
+		} else if (forward < -0.3) {
+			if (this.player.action != 'Walking Backwards') this.player.action = 'Walking Backwards';
+		} else {
 			forward = 0;
-			if (Math.abs(turn)>0.1){
+			if (Math.abs(turn) > 0.1) {
 				if (this.player.action != 'Turn') this.player.action = 'Turn';
-			}else if (this.player.action!="Idle"){
+			} else if (this.player.action != "Idle") {
 				this.player.action = 'Idle';
 			}
 		}
-		
-		if (forward==0 && turn==0){
+
+		if (forward == 0 && turn == 0) {
 			delete this.player.motion;
-		}else{
-			this.player.motion = { forward, turn }; 
+		} else {
+			this.player.motion = { forward, turn };
 		}
-		
+
 		this.player.updateSocket();
 	}
-	
-	createCameras(){
+
+	createCameras() {
 		const offset = new THREE.Vector3(0, 80, 0);
 		const front = new THREE.Object3D();
 		front.position.set(112, 100, 600);
@@ -261,61 +261,61 @@ class Game{
 		this.cameras = { front, back, wide, overhead, collect, chat };
 		this.activeCamera = this.cameras.back;
 	}
-	
-	showMessage(msg, fontSize=20, onOK=null){
+
+	showMessage(msg, fontSize = 20, onOK = null) {
 		const txt = document.getElementById('message_text');
 		txt.innerHTML = msg;
 		txt.style.fontSize = fontSize + 'px';
 		const btn = document.getElementById('message_ok');
 		const panel = document.getElementById('message');
 		const game = this;
-		if (onOK!=null){
-			btn.onclick = function(){ 
+		if (onOK != null) {
+			btn.onclick = function () {
 				panel.style.display = 'none';
-				onOK.call(game); 
+				onOK.call(game);
 			}
-		}else{
-			btn.onclick = function(){
+		} else {
+			btn.onclick = function () {
 				panel.style.display = 'none';
 			}
 		}
 		panel.style.display = 'flex';
 	}
-	
+
 	onWindowResize() {
 		this.camera.aspect = window.innerWidth / window.innerHeight;
 		this.camera.updateProjectionMatrix();
 
-		this.renderer.setSize( window.innerWidth, window.innerHeight );
+		this.renderer.setSize(window.innerWidth, window.innerHeight);
 
 	}
-	
-	updateRemotePlayers(dt){
-		if (this.remoteData===undefined || this.remoteData.length == 0 || this.player===undefined || this.player.id===undefined) return;
-		
+
+	updateRemotePlayers(dt) {
+		if (this.remoteData === undefined || this.remoteData.length == 0 || this.player === undefined || this.player.id === undefined) return;
+
 		const newPlayers = [];
 		const game = this;
 		//Get all remotePlayers from remoteData array
 		const remotePlayers = [];
 		const remoteColliders = [];
-		
-		this.remoteData.forEach( function(data){
-			if (game.player.id != data.id){
+
+		this.remoteData.forEach(function (data) {
+			if (game.player.id != data.id) {
 				//Is this player being initialised?
 				let iplayer;
-				game.initialisingPlayers.forEach( function(player){
+				game.initialisingPlayers.forEach(function (player) {
 					if (player.id == data.id) iplayer = player;
 				});
 				//If not being initialised check the remotePlayers array
-				if (iplayer===undefined){
+				if (iplayer === undefined) {
 					let rplayer;
-					game.remotePlayers.forEach( function(player){
+					game.remotePlayers.forEach(function (player) {
 						if (player.id == data.id) rplayer = player;
 					});
-					if (rplayer===undefined){
+					if (rplayer === undefined) {
 						//Initialise player
-						game.initialisingPlayers.push( new Player( game, data ));
-					}else{
+						game.initialisingPlayers.push(new Player(game, data));
+					} else {
 						//Player exists
 						remotePlayers.push(rplayer);
 						remoteColliders.push(rplayer.collider);
@@ -323,41 +323,41 @@ class Game{
 				}
 			}
 		});
-		
-		this.scene.children.forEach( function(object){
-			if (object.userData.remotePlayer && game.getRemotePlayerById(object.userData.id)==undefined){
+
+		this.scene.children.forEach(function (object) {
+			if (object.userData.remotePlayer && game.getRemotePlayerById(object.userData.id) == undefined) {
 				game.scene.remove(object);
-			}	
+			}
 		});
-		
+
 		this.remotePlayers = remotePlayers;
 		this.remoteColliders = remoteColliders;
-		this.remotePlayers.forEach(function(player){ player.update( dt ); });
+		this.remotePlayers.forEach(function (player) { player.update(dt); });
 	}
-	
-	onMouseDown( event ) {
-		if (this.remoteColliders===undefined || this.remoteColliders.length==0 || this.speechBubble===undefined || this.speechBubble.mesh===undefined) return;
-		
+
+	onMouseDown(event) {
+		if (this.remoteColliders === undefined || this.remoteColliders.length == 0 || this.speechBubble === undefined || this.speechBubble.mesh === undefined) return;
+
 		// mouse position in normalized device coordinates
 		// (-1 to +1) for both components
 		const mouse = new THREE.Vector2();
-		mouse.x = ( event.clientX / this.renderer.domElement.clientWidth ) * 2 - 1;
-		mouse.y = - ( event.clientY / this.renderer.domElement.clientHeight ) * 2 + 1;
+		mouse.x = (event.clientX / this.renderer.domElement.clientWidth) * 2 - 1;
+		mouse.y = - (event.clientY / this.renderer.domElement.clientHeight) * 2 + 1;
 
 		const raycaster = new THREE.Raycaster();
-		raycaster.setFromCamera( mouse, this.camera );
-		
-		const intersects = raycaster.intersectObjects( this.remoteColliders );
+		raycaster.setFromCamera(mouse, this.camera);
+
+		const intersects = raycaster.intersectObjects(this.remoteColliders);
 		const chat = document.getElementById('chat');
-		
-		if (intersects.length>0){
+
+		if (intersects.length > 0) {
 			const object = intersects[0].object;
-			const players = this.remotePlayers.filter( function(player){
-				if (player.collider!==undefined && player.collider==object){
+			const players = this.remotePlayers.filter(function (player) {
+				if (player.collider !== undefined && player.collider == object) {
 					return true;
 				}
 			});
-			if (players.length>0){
+			if (players.length > 0) {
 				const player = players[0];
 				console.log(`onMouseDown: player ${player.id}`);
 				this.speechBubble.player = player;
@@ -367,150 +367,150 @@ class Game{
 				chat.style.bottom = '0px';
 				this.activeCamera = this.cameras.chat;
 			}
-		}else{
+		} else {
 			//Is the chat panel visible?
-			if (chat.style.bottom=='0px' && (window.innerHeight - event.clientY)>40){
+			if (chat.style.bottom == '0px' && (window.innerHeight - event.clientY) > 40) {
 				console.log("onMouseDown: No player found");
-				if (this.speechBubble.mesh.parent!==null) this.speechBubble.mesh.parent.remove(this.speechBubble.mesh);
+				if (this.speechBubble.mesh.parent !== null) this.speechBubble.mesh.parent.remove(this.speechBubble.mesh);
 				delete this.speechBubble.player;
 				delete this.chatSocketId;
 				chat.style.bottom = '-50px';
 				this.activeCamera = this.cameras.back;
-			}else{
+			} else {
 				console.log("onMouseDown: typing");
 			}
 		}
 	}
-	
-	getRemotePlayerById(id){
-		if (this.remotePlayers===undefined || this.remotePlayers.length==0) return;
-		
-		const players = this.remotePlayers.filter(function(player){
+
+	getRemotePlayerById(id) {
+		if (this.remotePlayers === undefined || this.remotePlayers.length == 0) return;
+
+		const players = this.remotePlayers.filter(function (player) {
 			if (player.id == id) return true;
-		});	
-		
-		if (players.length==0) return;
-		
+		});
+
+		if (players.length == 0) return;
+
 		return players[0];
 	}
-	
+
 	animate() {
 		// stats.begin();
 
 		const game = this;
 		const dt = this.clock.getDelta();
-		
-		requestAnimationFrame( function(){ game.animate(); } );
-		
+
+		requestAnimationFrame(function () { game.animate(); });
+
 		this.updateRemotePlayers(dt);
-		
-		if (this.player.mixer!=undefined && this.mode==this.modes.ACTIVE) this.player.mixer.update(dt);
-		
-		if (this.player.action=='Walking'){
+
+		if (this.player.mixer != undefined && this.mode == this.modes.ACTIVE) this.player.mixer.update(dt);
+
+		if (this.player.action == 'Walking') {
 			const elapsedTime = Date.now() - this.player.actionTime;
-			if (elapsedTime>1000 && this.player.motion.forward>0){
+			if (elapsedTime > 1000 && this.player.motion.forward > 0) {
 				this.player.action = 'Running';
 			}
 		}
-		
+
 		if (this.player.motion !== undefined) this.player.move(dt);
-		
-		if (this.cameras!=undefined && this.cameras.active!=undefined && this.player!==undefined && this.player.object!==undefined){
+
+		if (this.cameras != undefined && this.cameras.active != undefined && this.player !== undefined && this.player.object !== undefined) {
 			this.camera.position.lerp(this.cameras.active.getWorldPosition(new THREE.Vector3()), 0.05);
 			const pos = this.player.object.position.clone();
-			if (this.cameras.active==this.cameras.chat){
+			if (this.cameras.active == this.cameras.chat) {
 				pos.y += 200;
-			}else{
+			} else {
 				pos.y += 300;
 			}
 			this.camera.lookAt(pos);
 		}
-		
-		if (this.sun !== undefined){
-			this.sun.position.copy( this.camera.position );
+
+		if (this.sun !== undefined) {
+			this.sun.position.copy(this.camera.position);
 			this.sun.position.y += 10;
 		}
-		
-		if (this.speechBubble!==undefined) this.speechBubble.show(this.camera.position);
-		
+
+		if (this.speechBubble !== undefined) this.speechBubble.show(this.camera.position);
+
 		// stats.update();
 		// statsManager.update();
-		
+
 		// stats.end();
 
-		this.renderer.render( this.scene, this.camera );
+		this.renderer.render(this.scene, this.camera);
 	}
 }
 
-class Player{
-	constructor(game, options){
+class Player {
+	constructor(game, options) {
 		this.local = true;
 		let model, colour;
-		
+
 		const colours = ['Black', 'Brown', 'White'];
-		colour = colours[Math.floor(Math.random()*colours.length)];
-									
-		if (options===undefined){
+		colour = colours[Math.floor(Math.random() * colours.length)];
+
+		if (options === undefined) {
 			const people = ['BeachBabe', 'BusinessMan', 'Doctor', 'FireFighter', 'Housewife', 'Policeman', 'Prostitute', 'Punk', 'RiotCop', 'Roadworker', 'Robber', 'Sheriff', 'Streetman', 'Waitress'];
-			model = people[Math.floor(Math.random()*people.length)];
-		}else if (typeof options =='object'){
+			model = people[Math.floor(Math.random() * people.length)];
+		} else if (typeof options == 'object') {
 			this.local = false;
 			this.options = options;
 			this.id = options.id;
 			model = options.model;
 			colour = options.colour;
-		}else{
+		} else {
 			model = options;
 		}
 		this.model = model;
 		this.colour = colour;
 		this.game = game;
 		this.animations = this.game.animations;
-		
+
 		const loader = new THREE.FBXLoader();
 		const player = this;
-		
-		loader.load( `${game.assetsPath}fbx/people/${model}.fbx`, function ( object ) {
 
-			object.mixer = new THREE.AnimationMixer( object );
+		loader.load(`${game.assetsPath}fbx/people/${model}.fbx`, function (object) {
+
+			object.mixer = new THREE.AnimationMixer(object);
 			player.root = object;
 			player.mixer = object.mixer;
-			
+
 			object.name = "Person";
-					
-			object.traverse( function ( child ) {
-				if ( child.isMesh ) {
+
+			object.traverse(function (child) {
+				if (child.isMesh) {
 					child.castShadow = true;
-					child.receiveShadow = true;		
+					child.receiveShadow = true;
 				}
-			} );
-			
-			
+			});
+
+
 			const textureLoader = new THREE.TextureLoader();
-			
-			textureLoader.load(`${game.assetsPath}images/SimplePeople_${model}_${colour}.png`, function(texture){
-				object.traverse( function ( child ) {
-					if ( child.isMesh ){
+
+			textureLoader.load(`${game.assetsPath}images/SimplePeople_${model}_${colour}.png`, function (texture) {
+				object.traverse(function (child) {
+					if (child.isMesh) {
 						child.material.map = texture;
 					}
-				} );
+				});
 			});
-			
+
 			player.object = new THREE.Object3D();
 			player.object.position.set(-1000, 0, -1070);
 			player.object.rotation.set(0, 2.7, 0);
-			
+
 			player.object.add(object);
-			if (player.deleted===undefined) game.scene.add(player.object);
-			
-			if (player.local){
+			if (player.deleted === undefined) game.scene.add(player.object);
+
+			if (player.local) {
 				game.createCameras();
 				game.sun.target = game.player.object;
 				game.animations.Idle = object.animations[0];
-				if (player.initSocket!==undefined) player.initSocket();
-			}else{
-				const geometry = new THREE.BoxGeometry(100,300,100);
-				const material = new THREE.MeshBasicMaterial({visible:true});
+				if (player.initSocket !== undefined) player.initSocket();
+			} else {
+				const geometry = new THREE.BoxGeometry(100, 300, 100);
+				const material = new THREE.MeshBasicMaterial({ visible: true });
 				const box = new THREE.Mesh(geometry, material);
 				box.name = "Collider";
 				box.position.set(0, 150, 0);
@@ -521,40 +521,40 @@ class Player{
 				const players = game.initialisingPlayers.splice(game.initialisingPlayers.indexOf(this), 1);
 				game.remotePlayers.push(players[0]);
 			}
-			
-			if (game.animations.Idle!==undefined) player.action = "Idle";
-		} );
+
+			if (game.animations.Idle !== undefined) player.action = "Idle";
+		});
 	}
-	
-	set action(name){
+
+	set action(name) {
 		//Make a copy of the clip if this is a remote player
 		if (this.actionName == name) return;
-		const clip = (this.local) ? this.animations[name] : THREE.AnimationClip.parse(THREE.AnimationClip.toJSON(this.animations[name])); 
-		const action = this.mixer.clipAction( clip );
-        action.time = 0;
+		const clip = (this.local) ? this.animations[name] : THREE.AnimationClip.parse(THREE.AnimationClip.toJSON(this.animations[name]));
+		const action = this.mixer.clipAction(clip);
+		action.time = 0;
 		this.mixer.stopAllAction();
 		this.actionName = name;
 		this.actionTime = Date.now();
-		
-		action.fadeIn(0.5);	
+
+		action.fadeIn(0.5);
 		action.play();
 	}
-	
-	get action(){
+
+	get action() {
 		return this.actionName;
 	}
-	
-	update(dt){
+
+	update(dt) {
 		this.mixer.update(dt);
-		
-		if (this.game.remoteData.length>0){
+
+		if (this.game.remoteData.length > 0) {
 			let found = false;
-			for(let data of this.game.remoteData){
+			for (let data of this.game.remoteData) {
 				if (data.id != this.id) continue;
 				//Found the player
-				this.object.position.set( data.x, data.y, data.z );
+				this.object.position.set(data.x, data.y, data.z);
 				const euler = new THREE.Euler(data.pb, data.heading, data.pb);
-				this.object.quaternion.setFromEuler( euler );
+				this.object.quaternion.setFromEuler(euler);
 				this.action = data.action;
 				found = true;
 			}
@@ -563,41 +563,317 @@ class Player{
 	}
 }
 
-class PlayerLocal extends Player{
-	constructor(game, model){
+class PlayerLocal extends Player {
+	constructor(game, model) {
 		super(game, model);
-		
+
+		var isChannelReady = false;
+		var isInitiator = false;
+		var isStarted = false;
+		var localStream;
+		var pc;
+		var remoteStream;
+		var turnReady;
+
+		var pcConfig = {
+			'iceServers': [{
+				'urls': 'stun:stun.l.google.com:19302'
+			}]
+		};
+
+		// Set up audio and video regardless of what devices are present.
+		var sdpConstraints = {
+			offerToReceiveAudio: true,
+			offerToReceiveVideo: true
+		};
+
+		/////////////////////////////////////////////
+
+		var room = 'foo';
+		// Could prompt for room name:
+		// room = prompt('Enter room name:');
+
 		const player = this;
 		const socket = io.connect();
-		socket.on('setId', function(data){
+		socket.on('setId', function (data) {
 			player.id = data.id;
 		});
-		socket.on('remoteData', function(data){
+		socket.on('remoteData', function (data) {
 			game.remoteData = data;
 		});
-		socket.on('deletePlayer', function(data){
-			const players = game.remotePlayers.filter(function(player){
-				if (player.id == data.id){
+
+		// rtc
+		if (room !== '') {
+			socket.emit('create or join', room);
+			console.log('Attempted to create or  join room', room);
+		}
+
+		socket.on('created', function (room) {
+			console.log('Created room ' + room);
+			isInitiator = true;
+		});
+
+		socket.on('full', function (room) {
+			console.log('Room ' + room + ' is full');
+		});
+
+		socket.on('join', function (room) {
+			console.log('Another peer made a request to join room ' + room);
+			console.log('This peer is the initiator of room ' + room + '!');
+			isChannelReady = true;
+		});
+
+		socket.on('joined', function (room) {
+			console.log('joined: ' + room);
+			isChannelReady = true;
+		});
+
+		socket.on('log', function (array) {
+			console.log.apply(console, array);
+		});
+
+		////////////////////////////////////////////////
+
+		function sendMessage(message) {
+			console.log('Client sending message: ', message);
+			socket.emit('message', message);
+		}
+
+		// This client receives a message
+		socket.on('message', function (message) {
+			console.log('Client received message:', message);
+			if (message === 'got user media') {
+				maybeStart();
+			} else if (message.type === 'offer') {
+				if (!isInitiator && !isStarted) {
+					maybeStart();
+				}
+				pc.setRemoteDescription(new RTCSessionDescription(message));
+				doAnswer();
+			} else if (message.type === 'answer' && isStarted) {
+				pc.setRemoteDescription(new RTCSessionDescription(message));
+			} else if (message.type === 'candidate' && isStarted) {
+				var candidate = new RTCIceCandidate({
+					sdpMLineIndex: message.label,
+					candidate: message.candidate
+				});
+				pc.addIceCandidate(candidate);
+			} else if (message === 'bye' && isStarted) {
+				//   handleRemoteHangup();
+			}
+		});
+
+		////////////////////////////////////////////////////
+
+		var localVideo = document.querySelector('#localVideo');
+		var remoteVideo = document.querySelector('#remoteVideo');
+
+		navigator.mediaDevices.getUserMedia({
+			audio: true,
+			video: true
+		})
+			.then(gotStream)
+			.catch(function (e) {
+				alert('getUserMedia() error: ' + e.name);
+			});
+
+		function gotStream(stream) {
+			console.log('Adding local stream.');
+			localStream = stream;
+			localVideo.srcObject = stream;
+			sendMessage('got user media');
+			if (isInitiator) {
+				maybeStart();
+			}
+		}
+
+		var constraints = {
+			video: true
+		};
+
+		console.log('Getting user media with constraints', constraints);
+
+		if (location.hostname !== 'localhost') {
+			requestTurn(
+				'https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913'
+			);
+		}
+
+		function maybeStart() {
+			console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
+			if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
+				console.log('>>>>>> creating peer connection');
+				createPeerConnection();
+				pc.addStream(localStream);
+				isStarted = true;
+				console.log('isInitiator', isInitiator);
+				if (isInitiator) {
+					doCall();
+				}
+			}
+		}
+
+		window.onbeforeunload = function () {
+			sendMessage('bye');
+		};
+
+		/////////////////////////////////////////////////////////
+
+		function createPeerConnection() {
+			try {
+				pc = new RTCPeerConnection(null);
+				pc.onicecandidate = handleIceCandidate;
+				pc.onaddstream = handleRemoteStreamAdded;
+				pc.onremovestream = handleRemoteStreamRemoved;
+				console.log('Created RTCPeerConnnection');
+			} catch (e) {
+				console.log('Failed to create PeerConnection, exception: ' + e.message);
+				alert('Cannot create RTCPeerConnection object.');
+				return;
+			}
+		}
+
+		function handleIceCandidate(event) {
+			console.log('icecandidate event: ', event);
+			if (event.candidate) {
+				sendMessage({
+					type: 'candidate',
+					label: event.candidate.sdpMLineIndex,
+					id: event.candidate.sdpMid,
+					candidate: event.candidate.candidate
+				});
+			} else {
+				console.log('End of candidates.');
+			}
+		}
+
+		function handleCreateOfferError(event) {
+			console.log('createOffer() error: ', event);
+		}
+
+		function doCall() {
+			console.log('Sending offer to peer');
+			pc.createOffer(setLocalAndSendMessage, handleCreateOfferError);
+		}
+
+		function doAnswer() {
+			console.log('Sending answer to peer.');
+			pc.createAnswer().then(
+				setLocalAndSendMessage,
+				onCreateSessionDescriptionError
+			);
+		}
+
+		function setLocalAndSendMessage(sessionDescription) {
+			pc.setLocalDescription(sessionDescription);
+			console.log('setLocalAndSendMessage sending message', sessionDescription);
+			sendMessage(sessionDescription);
+		}
+
+		function onCreateSessionDescriptionError(error) {
+			trace('Failed to create session description: ' + error.toString());
+		}
+
+		function requestTurn(turnURL) {
+			var turnExists = false;
+			for (var i in pcConfig.iceServers) {
+				if (pcConfig.iceServers[i].urls.substr(0, 5) === 'turn:') {
+					turnExists = true;
+					turnReady = true;
+					break;
+				}
+			}
+			if (!turnExists) {
+				console.log('Getting TURN server from ', turnURL);
+				// No TURN server. Get one from computeengineondemand.appspot.com:
+				//   var xhr = new XMLHttpRequest();
+				//   xhr.onreadystatechange = function() {
+				// 	if (xhr.readyState === 4 && xhr.status === 200) {
+				// 	  var turnServer = JSON.parse(xhr.responseText);
+				// 	  console.log('Got TURN server: ', turnServer);
+				// 	  pcConfig.iceServers.push({
+				// 		'urls': 'turn:' + turnServer.username + '@' + turnServer.turn,
+				// 		'credential': turnServer.password
+				// 	  });
+				// 	  turnReady = true;
+				// 	}
+				//   };
+				//   xhr.open('GET', turnURL, true);
+				//   xhr.send();
+
+				let xhr = new XMLHttpRequest();
+				xhr.onreadystatechange = function ($evt) {
+					if (xhr.readyState == 4 && xhr.status == 200) {
+						let res = JSON.parse(xhr.responseText);
+						console.log("response: ", res);
+						var turnServer = JSON.parse(xhr.responseText);
+						console.log('Got TURN server: ', turnServer);
+						pcConfig.iceServers.push({
+							'urls': 'turn:' + turnServer.username + '@' + turnServer.turn,
+							'credential': turnServer.password
+						});
+						turnReady = true;
+					}
+				}
+				xhr.open("PUT", "https://global.xirsys.net/_turn/wowmeet", true);
+				xhr.setRequestHeader("Authorization", "Basic " + btoa("sachinpradhan:ba8a1788-22e1-11ed-bcc7-0242ac150003"));
+				xhr.setRequestHeader("Content-Type", "application/json");
+				xhr.send(JSON.stringify({ "format": "urls" }));
+			}
+		}
+
+		function handleRemoteStreamAdded(event) {
+			console.log('Remote stream added.');
+			const videoElement = document.createElement('video');
+			remoteStream = event.stream;
+			videoElement.srcObject = remoteStream;
+		}
+
+		function handleRemoteStreamRemoved(event) {
+			console.log('Remote stream removed. Event: ', event);
+		}
+
+		function hangup() {
+			console.log('Hanging up.');
+			stop();
+			sendMessage('bye');
+		}
+
+		function handleRemoteHangup() {
+			console.log('Session terminated.');
+			stop();
+			isInitiator = false;
+		}
+
+		function stop() {
+			isStarted = false;
+			pc.close();
+			pc = null;
+		}
+
+		socket.on('deletePlayer', function (data) {
+			const players = game.remotePlayers.filter(function (player) {
+				if (player.id == data.id) {
 					return player;
 				}
 			});
-			if (players.length>0){
+			if (players.length > 0) {
 				let index = game.remotePlayers.indexOf(players[0]);
-				if (index!=-1){
-					game.remotePlayers.splice( index, 1 );
+				if (index != -1) {
+					game.remotePlayers.splice(index, 1);
 					game.scene.remove(players[0].object);
 				}
-            }else{
-                let index = game.initialisingPlayers.indexOf(data.id);
-                if (index!=-1){
-                    const player = game.initialisingPlayers[index];
-                    player.deleted = true;
-                    game.initialisingPlayers.splice(index, 1);
-                }
+			} else {
+				let index = game.initialisingPlayers.indexOf(data.id);
+				if (index != -1) {
+					const player = game.initialisingPlayers[index];
+					player.deleted = true;
+					game.initialisingPlayers.splice(index, 1);
+				}
 			}
 		});
-        
-		socket.on('chat message', function(data){
+
+		socket.on('chat message', function (data) {
 			document.getElementById('chat').style.bottom = '0px';
 			const player = game.getRemotePlayerById(data.id);
 			game.speechBubble.player = player;
@@ -605,20 +881,20 @@ class PlayerLocal extends Player{
 			game.activeCamera = game.cameras.chat;
 			game.speechBubble.update(data.message);
 		});
-        
-		$('#msg-form').submit(function(e){
-			socket.emit('chat message', { id:game.chatSocketId, message:$('#m').val() });
+
+		$('#msg-form').submit(function (e) {
+			socket.emit('chat message', { id: game.chatSocketId, message: $('#m').val() });
 			$('#m').val('');
 			return false;
 		});
-		
+
 		this.socket = socket;
 	}
-	
-	initSocket(){
+
+	initSocket() {
 		//console.log("PlayerLocal.initSocket");
-		this.socket.emit('init', { 
-			model:this.model, 
+		this.socket.emit('init', {
+			model: this.model,
 			colour: this.colour,
 			x: this.object.position.x,
 			y: this.object.position.y,
@@ -627,9 +903,9 @@ class PlayerLocal extends Player{
 			pb: this.object.rotation.x
 		});
 	}
-	
-	updateSocket(){
-		if (this.socket !== undefined){
+
+	updateSocket() {
+		if (this.socket !== undefined) {
 			//console.log(`PlayerLocal.updateSocket - rotation(${this.object.rotation.x.toFixed(1)},${this.object.rotation.y.toFixed(1)},${this.object.rotation.z.toFixed(1)})`);
 			this.socket.emit('update', {
 				x: this.object.position.x,
@@ -641,78 +917,78 @@ class PlayerLocal extends Player{
 			})
 		}
 	}
-	
-	move(dt){
+
+	move(dt) {
 		const pos = this.object.position.clone();
 		pos.y += 60;
 		let dir = new THREE.Vector3();
 		this.object.getWorldDirection(dir);
-		if (this.motion.forward<0) dir.negate();
+		if (this.motion.forward < 0) dir.negate();
 		let raycaster = new THREE.Raycaster(pos, dir);
 		let blocked = false;
 		const colliders = this.game.colliders;
-	
-		if (colliders!==undefined){ 
+
+		if (colliders !== undefined) {
 			const intersect = raycaster.intersectObjects(colliders);
-			if (intersect.length>0){
-				if (intersect[0].distance<50) blocked = true;
+			if (intersect.length > 0) {
+				if (intersect[0].distance < 50) blocked = true;
 			}
 		}
-		
-		if (!blocked){
-			if (this.motion.forward>0){
-				const speed = (this.action=='Running') ? 500 : 150;
-				this.object.translateZ(dt*speed);
-			}else{
-				this.object.translateZ(-dt*30);
+
+		if (!blocked) {
+			if (this.motion.forward > 0) {
+				const speed = (this.action == 'Running') ? 500 : 150;
+				this.object.translateZ(dt * speed);
+			} else {
+				this.object.translateZ(-dt * 30);
 			}
 		}
-		
-		if (colliders!==undefined){
+
+		if (colliders !== undefined) {
 			//cast left
-			dir.set(-1,0,0);
+			dir.set(-1, 0, 0);
 			dir.applyMatrix4(this.object.matrix);
 			dir.normalize();
 			raycaster = new THREE.Raycaster(pos, dir);
 
 			let intersect = raycaster.intersectObjects(colliders);
-			if (intersect.length>0){
-				if (intersect[0].distance<50) this.object.translateX(100-intersect[0].distance);
+			if (intersect.length > 0) {
+				if (intersect[0].distance < 50) this.object.translateX(100 - intersect[0].distance);
 			}
-			
+
 			//cast right
-			dir.set(1,0,0);
+			dir.set(1, 0, 0);
 			dir.applyMatrix4(this.object.matrix);
 			dir.normalize();
 			raycaster = new THREE.Raycaster(pos, dir);
 
 			intersect = raycaster.intersectObjects(colliders);
-			if (intersect.length>0){
-				if (intersect[0].distance<50) this.object.translateX(intersect[0].distance-100);
+			if (intersect.length > 0) {
+				if (intersect[0].distance < 50) this.object.translateX(intersect[0].distance - 100);
 			}
-			
+
 			//cast down
-			dir.set(0,-1,0);
+			dir.set(0, -1, 0);
 			pos.y += 200;
 			raycaster = new THREE.Raycaster(pos, dir);
 			const gravity = 30;
 
 			intersect = raycaster.intersectObjects(colliders);
-			if (intersect.length>0){
+			if (intersect.length > 0) {
 				const targetY = pos.y - intersect[0].distance;
-				if (targetY > this.object.position.y){
+				if (targetY > this.object.position.y) {
 					//Going up
 					this.object.position.y = 0.8 * this.object.position.y + 0.2 * targetY;
 					this.velocityY = 0;
-				}else if (targetY < this.object.position.y){
+				} else if (targetY < this.object.position.y) {
 					//Falling
-					if (this.velocityY==undefined) this.velocityY = 0;
+					if (this.velocityY == undefined) this.velocityY = 0;
 					this.velocityY += dt * gravity;
 					this.object.position.y -= this.velocityY;
-					if (this.object.position.y < targetY){
+					if (this.object.position.y < targetY) {
 						this.velocityY = 0;
 						this.object.position.y = targetY;
-						
+
 
 
 
@@ -720,22 +996,22 @@ class PlayerLocal extends Player{
 				}
 			}
 		}
-		
-		this.object.rotateY(this.motion.turn*dt);
-		
+
+		this.object.rotateY(this.motion.turn * dt);
+
 		this.updateSocket();
 	}
 }
 
-class SpeechBubble{
-	constructor(game, msg, size=1){
-		this.config = { font:'Calibri', size:24, padding:10, colour:'#222', width:256, height:256 };
-		
+class SpeechBubble {
+	constructor(game, msg, size = 1) {
+		this.config = { font: 'Calibri', size: 24, padding: 10, colour: '#222', width: 256, height: 256 };
+
 		const planeGeometry = new THREE.PlaneGeometry(size, size);
 		const planeMaterial = new THREE.MeshBasicMaterial()
 		this.mesh = new THREE.Mesh(planeGeometry, planeMaterial);
 		game.scene.add(this.mesh);
-		
+
 		const self = this;
 		const loader = new THREE.TextureLoader();
 		loader.load(
@@ -743,31 +1019,31 @@ class SpeechBubble{
 			`${game.assetsPath}images/speech.png`,
 
 			// onLoad callback
-			function ( texture ) {
+			function (texture) {
 				// create material when the texture is loaded
 				self.img = texture.image;
 				self.mesh.material.map = texture;
 				self.mesh.material.transparent = true;
 				self.mesh.material.needsUpdate = true;
-				if (msg!==undefined) self.update(msg);
+				if (msg !== undefined) self.update(msg);
 			},
 
 			// onProgress callback currently not supported
 			undefined,
 
 			// onError callback
-			function ( err ) {
-				console.error( 'An error happened.' );
+			function (err) {
+				console.error('An error happened.');
 			}
 		);
 	}
-	
-	update(msg){
-		if (this.mesh===undefined) return;
-		
+
+	update(msg) {
+		if (this.mesh === undefined) return;
+
 		let context = this.context;
-		
-		if (this.mesh.userData.context===undefined){
+
+		if (this.mesh.userData.context === undefined) {
 			const canvas = this.createOffscreenCanvas(this.config.width, this.config.height);
 			this.context = canvas.getContext('2d');
 			context = this.context;
@@ -776,54 +1052,54 @@ class SpeechBubble{
 			context.textAlign = 'center';
 			this.mesh.material.map = new THREE.CanvasTexture(canvas);
 		}
-		
+
 		const bg = this.img;
 		context.clearRect(0, 0, this.config.width, this.config.height);
 		context.drawImage(bg, 0, 0, bg.width, bg.height, 0, 0, this.config.width, this.config.height);
 		this.wrapText(msg, context);
-		
+
 		this.mesh.material.map.needsUpdate = true;
 		// statsManager.update();
 	}
-	
+
 	createOffscreenCanvas(w, h) {
 		const canvas = document.createElement('canvas');
 		canvas.width = w;
 		canvas.height = h;
 		return canvas;
 	}
-	
-	wrapText(text, context){
+
+	wrapText(text, context) {
 		const words = text.split(' ');
-        let line = '';
+		let line = '';
 		const lines = [];
-		const maxWidth = this.config.width - 2*this.config.padding;
+		const maxWidth = this.config.width - 2 * this.config.padding;
 		const lineHeight = this.config.size + 8;
-		
-		words.forEach( function(word){
+
+		words.forEach(function (word) {
 			const testLine = `${line}${word} `;
-        	const metrics = context.measureText(testLine);
-        	const testWidth = metrics.width;
+			const metrics = context.measureText(testLine);
+			const testWidth = metrics.width;
 			if (testWidth > maxWidth) {
 				lines.push(line);
 				line = `${word} `;
-			}else {
+			} else {
 				line = testLine;
 			}
 		});
-		
+
 		if (line != '') lines.push(line);
-		
-		let y = (this.config.height - lines.length * lineHeight)/2;
-		
-		lines.forEach( function(line){
+
+		let y = (this.config.height - lines.length * lineHeight) / 2;
+
+		lines.forEach(function (line) {
 			context.fillText(line, 128, y);
 			y += lineHeight;
 		});
 	}
-	
-	show(pos){
-		if (this.mesh!==undefined && this.player!==undefined){
+
+	show(pos) {
+		if (this.mesh !== undefined && this.player !== undefined) {
 			this.mesh.position.set(this.player.object.position.x, this.player.object.position.y + 380, this.player.object.position.z);
 			this.mesh.lookAt(pos);
 		}
