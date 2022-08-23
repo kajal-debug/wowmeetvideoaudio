@@ -666,7 +666,7 @@ class PlayerLocal extends Player {
 		////////////////////////////////////////////////////
 
 		var localVideo = document.querySelector('#localVideo');
-		var remoteVideo = document.querySelector('#remoteVideo');
+		var remoteVideo = document.querySelector('#videos');
 
 		navigator.mediaDevices.getUserMedia({
 			audio: true,
@@ -825,6 +825,8 @@ class PlayerLocal extends Player {
 		function handleRemoteStreamAdded(event) {
 			console.log('Remote stream added.');
 			const videoElement = document.createElement('video');
+			videoElement.autoplay;
+			remoteVideo.appendChild(videoElement);
 			remoteStream = event.stream;
 			videoElement.srcObject = remoteStream;
 		}
