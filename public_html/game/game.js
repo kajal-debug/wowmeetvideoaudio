@@ -826,9 +826,9 @@ class PlayerLocal extends Player {
 			console.log('Remote stream added.');
 			const videoElement = document.createElement('video');
 			videoElement.autoplay;
-			remoteVideo.appendChild(videoElement);
 			remoteStream = event.stream;
 			videoElement.srcObject = remoteStream;
+			remoteVideo.appendChild(videoElement);
 		}
 
 		function handleRemoteStreamRemoved(event) {
