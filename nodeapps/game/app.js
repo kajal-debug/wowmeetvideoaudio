@@ -9,7 +9,7 @@ app.use(express.static('../../public_html/game/v3'));
 app.get('/',function(req, res) {
     res.sendFile(__dirname + '../../public_html/game/v3/index.html');
 });
-
+const port = process.env.PORT||8001
 io.sockets.on('connection', function(socket){
 	socket.userData = { x:0, y:0, z:0, heading:0 }; //Default values;
  
@@ -101,7 +101,7 @@ io.sockets.on('connection', function(socket){
 	});
 });
 
-http.listen(8001, function(){
+http.listen(port, function(){
   console.log('listening on *:8001');
 });
 
