@@ -44,7 +44,7 @@ io.sockets.on('connection', function(socket){
 	});
 	
 	socket.on('chat message', function(data){
-		console.log(`chat message:${data.id} ${data.message}`);
+		//console.log(`chat message:${data.id} ${data.message}`);
 		io.to(data.id).emit('chat message', { id: socket.id, message: data.message });
 	});
 
@@ -90,7 +90,7 @@ io.sockets.on('connection', function(socket){
 			ifaces[dev].forEach(function(details) {
 				if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
 					socket.emit('ipaddr', details.address);
-					console.log("abaas" + details.address);
+					//console.log("abaas" + details.address);
 				}
 			});
 		}
