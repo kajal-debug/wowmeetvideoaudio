@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>WoWMeet - multi-player web3d</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans|Kavivanar" rel="stylesheet">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#message{
+				position:absolute;
+				left: 50%;
+				top: 50%;
+				transform: translateX(-50%) translateY(-50%);
+				font-family: 'Kavivanar', san-serif;
+				font-size: 40px;
+				width:80%;
+				max-width:280px;
+				padding: 15px 15px 50px 15px;
+				text-align: center;
+				display:none;
+				align-content: center;
+				justify-content: center;
+				background-color: aliceblue;
+				border: medium solid #3D455C;
+				border-radius: 20px;
+				color: #3D455C;
+				z-index: 99;
+			}
+			#message_ok{
+				position: absolute;
+				bottom: 10px;
+				padding: 10px 20px 10px 20px;
+				font-family: sans-serif;
+				font-size: 20px;
+				background-color: #3D455C;
+				color: #fff;
+				border-radius: 8px;
+				border: medium solid #696882;
+			}
+			#chat{
+				position: absolute;
+				width: 100%;
+				height: 40px;
+				bottom: -40px;
+				transition: all 0.5s;
+			}
+			form { background: #000; padding: 3px; width: 100%; }
+      		form input { border: 0; padding: 10px; width: 88%; margin-right: .5%; }
+      		form button { width: 8%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+		</style>
+	</head>
+
+	<body>
+		<style>
+			#stats {
+				z-index: 9999;
+				position: absolute;
+				top: 0;
+				right: 0;
+				display: grid;
+			}
+			video {
+				max-width: 100%;
+				width: 320px;
+			}
+		</style>
+		<div id="message">
+			<p id="message_text"></p>
+			<button id="message_ok">OK</button>
+		</div>
+
+		<div id="chat">
+			<form id="msg-form" action="">
+      			<input id="m" autocomplete="off" /><button>Send</button>
+    		</form>
+		</div>
+
+		<div id="stats"></div>
+
+		<!-- rtc elements -->
+
+		<!-- <video id="localVideo" autoplay playsinline></video>
+		<video id="remoteVideo" autoplay playsinline></video>
+		<div>
+			<button id="startButton">Start</button>
+			<button id="callButton">Call</button>
+			<button id="hangupButton">Hang Up</button>
+		</div> -->
+
+		<!-- <textarea id="dataChannelSend" disabled
+		placeholder="Press Start, enter some text, then press Send."></textarea>
+		<textarea id="dataChannelReceive" disabled></textarea>
+		<div id="buttons">
+			<button id="startButton">Start</button>
+			<button id="sendButton">Send</button>
+			<button id="closeButton">Stop</button>
+		</div> -->
+
+		<div id="videos" style="position: absolute; width: 20vh;">
+			<video id="localVideo" autoplay muted></video>
+			<video id="remoteVideo" autoplay></video>
+		</div>
+
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+		<script src="libs/rtc.js"></script>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script>
+		<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+		<!-- <script src="/socket.io/socket.io.js"></script> -->
+		
+		<script src= "libs/stats.min.js"></script>
+		<script src="libs/stats-manager.js"></script>
+		<script src= "libs/inflate.min.js"></script>
+		<script src="libs/FBXLoader.js"></script>
+		<script src="libs/Detector.js"></script>
+		<script src="libs/toon3d.js"></script>
+		<script src="game.js"></script>
+		<script>
+			var game;
+			document.addEventListener("DOMContentLoaded", function(){ game = new Game(); });
+		</script>
+	</body>
+</html>
+
+
