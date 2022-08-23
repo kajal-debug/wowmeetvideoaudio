@@ -3,11 +3,11 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-app.use(express.static('../../public_html/game/'));
-app.use(express.static('../../public_html/libs'));
-app.use(express.static('../../public_html/game/v3'));
+app.use(express.static('./public_html/game/'));
+app.use(express.static('./public_html/libs'));
+app.use(express.static('./public_html/game/v3'));
 app.get('/',function(req, res) {
-    res.sendFile(__dirname + '../../public_html/game/v3/index.html');
+    res.sendFile(__dirname + './public_html/game/v3/index.html');
 });
 const port = process.env.PORT||8001
 io.sockets.on('connection', function(socket){
