@@ -1,133 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>WoWMeet - multi-player web3d</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans|Kavivanar" rel="stylesheet">
-		<style>
-			body {
-				font-family: Monospace;
-				background-color: #000;
-				color: #fff;
-				margin: 0px;
-				overflow: hidden;
+
+<head>
+	<title>WoWMeet - multi-player web3d</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+	<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans|Kavivanar" rel="stylesheet" />
+	<style>
+		body {
+			font-family: Monospace;
+			background-color: #000;
+			color: #fff;
+			margin: 0px;
+			overflow: hidden;
+		}
+
+		#message {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translateX(-50%) translateY(-50%);
+			font-family: 'Kavivanar', san-serif;
+			font-size: 40px;
+			width: 80%;
+			max-width: 280px;
+			padding: 15px 15px 50px 15px;
+			text-align: center;
+			display: none;
+			align-content: center;
+			justify-content: center;
+			background-color: aliceblue;
+			border: medium solid #3d455c;
+			border-radius: 20px;
+			color: #3d455c;
+			z-index: 99;
+		}
+
+		#message_ok {
+			position: absolute;
+			bottom: 10px;
+			padding: 10px 20px 10px 20px;
+			font-family: sans-serif;
+			font-size: 20px;
+			background-color: #3d455c;
+			color: #fff;
+			border-radius: 8px;
+			border: medium solid #696882;
+		}
+
+		#chat {
+			position: absolute;
+			width: 100%;
+			height: 40px;
+			bottom: -40px;
+			transition: all 0.5s;
+		}
+
+		form {
+			background: #000;
+			padding: 3px;
+			width: 100%;
+		}
+
+		form input {
+			border: 0;
+			padding: 10px;
+			width: 88%;
+			margin-right: 0.5%;
+		}
+
+		form button {
+			width: 8%;
+			background: rgb(130, 224, 255);
+			border: none;
+			padding: 10px;
+		}
+	</style>
+</head>
+
+<body>
+	<style>
+		#stats {
+			z-index: 9999;
+			position: absolute;
+			top: 0;
+			right: 0;
+			display: grid;
+		}
+
+		/* video {
+			max-width: 100%;
+			width: 320px;
+		} */
+
+		#join-btn {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			margin-top: -50px;
+			margin-left: -100px;
+			font-size: 18px;
+			z-index: 9999;
+			padding: 20px 40px;
+		}
+
+		#video-streams {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(20vh, 1fr));
+			height: 80vh;
+			width: 40vh;
+			margin: 0 auto;
+		}
+
+		.video-container {
+			/* max-height: 100%;
+			border: 2px solid black;
+			background-color: #203a49; */
+		}
+
+		/* .video-container, */
+		.video-player {
+			height: 15vh;
+			width: 20vh;
+
+		}
+
+		.rtc-btn {
+			border: none;
+			background-color: cadetblue;
+			color: #fff;
+			padding: 10px 20px;
+			font-size: 16px;
+			margin: 2px;
+			cursor: pointer;
+		}
+
+		#stream-wrapper {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 40vh;
+			height: 100vh;
+
+		}
+
+		#stream-controls {
+			display: none;
+			justify-content: center;
+			margin-top: 0.5em;
+		}
+
+		@media screen and (max-width: 1400px) {
+			#video-streams {
+				grid-template-columns: repeat(auto-fit, minmax(100%, 1fr));
+				width: 95%;
 			}
-			#message{
-				position:absolute;
-				left: 50%;
-				top: 50%;
-				transform: translateX(-50%) translateY(-50%);
-				font-family: 'Kavivanar', san-serif;
-				font-size: 40px;
-				width:80%;
-				max-width:280px;
-				padding: 15px 15px 50px 15px;
-				text-align: center;
-				display:none;
-				align-content: center;
-				justify-content: center;
-				background-color: aliceblue;
-				border: medium solid #3D455C;
-				border-radius: 20px;
-				color: #3D455C;
-				z-index: 99;
-			}
-			#message_ok{
-				position: absolute;
-				bottom: 10px;
-				padding: 10px 20px 10px 20px;
-				font-family: sans-serif;
-				font-size: 20px;
-				background-color: #3D455C;
-				color: #fff;
-				border-radius: 8px;
-				border: medium solid #696882;
-			}
-			#chat{
-				position: absolute;
+		}
+
+		@media screen and (max-width: 800px) {
+			/* .left,
+			.main,
+			.right {
 				width: 100%;
-				height: 40px;
-				bottom: -40px;
-				transition: all 0.5s;
-			}
-			form { background: #000; padding: 3px; width: 100%; }
-      		form input { border: 0; padding: 10px; width: 88%; margin-right: .5%; }
-      		form button { width: 8%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-		</style>
-	</head>
+			} */
+		}
+	</style>
+	<div id="message">
+		<p id="message_text"></p>
+		<button id="message_ok">OK</button>
+	</div>
 
-	<body>
-		<style>
-			#stats {
-				z-index: 9999;
-				position: absolute;
-				top: 0;
-				right: 0;
-				display: grid;
-			}
-			video {
-				max-width: 100%;
-				width: 320px;
-			}
-		</style>
-		<div id="message">
-			<p id="message_text"></p>
-			<button id="message_ok">OK</button>
+	<div id="chat">
+		<form id="msg-form" action=""><input id="m" autocomplete="off" /><button>Send</button></form>
+	</div>
+
+	<div id="stats"></div>
+
+	<!-- rtc elements -->
+
+	<button class="rtc-btn" id="join-btn">Start Talking</button>
+
+	<div id="stream-wrapper">
+		<div id="video-streams"></div>
+
+		<div id="stream-controls">
+			<button class="rtc-btn" id="leave-btn">Leave</button>
+			<button class="rtc-btn" id="mic-btn">Mic On</button>
+			<button class="rtc-btn" id="camera-btn">Camera on</button>
 		</div>
+	</div>
 
-		<div id="chat">
-			<form id="msg-form" action="">
-      			<input id="m" autocomplete="off" /><button>Send</button>
-    		</form>
-		</div>
+	<!-- <script src="/socket.io/socket.io.js"></script> -->
+	<!-- <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> -->
+	<!-- <script src="libs/rtc.js"></script> -->
+	
+	<script src="libs/Detector.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script>
+	<script src="libs/stats.min.js"></script>
+	<script src="libs/stats-manager.js"></script>
+	<script src="libs/inflate.min.js"></script>
+	<script src="libs/FBXLoader.js"></script>
 
-		<div id="stats"></div>
+	<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 
-		<!-- rtc elements -->
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="libs/AgoraRTC_N-4.7.3.js"></script>
+	<script src="libs/rtc_agora.js"></script>
 
-		<!-- <video id="localVideo" autoplay playsinline></video>
-		<video id="remoteVideo" autoplay playsinline></video>
-		<div>
-			<button id="startButton">Start</button>
-			<button id="callButton">Call</button>
-			<button id="hangupButton">Hang Up</button>
-		</div> -->
+	<!-- joystick -->
+	<script src="libs/toon3d.js"></script>
+	<script src="game.js"></script>
+	<script>
+		var game;
+		document.addEventListener('DOMContentLoaded', function () {
+			game = new Game();
+		});
+	</script>
+</body>
 
-		<!-- <textarea id="dataChannelSend" disabled
-		placeholder="Press Start, enter some text, then press Send."></textarea>
-		<textarea id="dataChannelReceive" disabled></textarea>
-		<div id="buttons">
-			<button id="startButton">Start</button>
-			<button id="sendButton">Send</button>
-			<button id="closeButton">Stop</button>
-		</div> -->
-
-		<div id="videos">
-			<video id="localVideo" autoplay muted></video>
-			<video id="remoteVideo" autoplay></video>
-		</div>
-
-		<script src="/socket.io/socket.io.js"></script>
-		<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-		<!-- <script src="libs/rtc.js"></script> -->
-
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script>
-		<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-		<!-- <script src="/socket.io/socket.io.js"></script> -->
-		
-		<script src= "libs/stats.min.js"></script>
-		<script src="libs/stats-manager.js"></script>
-		<script src= "libs/inflate.min.js"></script>
-		<script src="libs/FBXLoader.js"></script>
-		<script src="libs/Detector.js"></script>
-		<script src="libs/toon3d.js"></script>
-		<script src="game.js"></script>
-		<script>
-			var game;
-			document.addEventListener("DOMContentLoaded", function(){ game = new Game(); });
-		</script>
-	</body>
 </html>
-
-
